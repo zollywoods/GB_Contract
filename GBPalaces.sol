@@ -20,36 +20,13 @@ contract GBPalaces is Ownable, ERC721, VRFConsumerBase {
     uint256 internal palaceFee;
 
     uint256 public randomResult;
-
-    struct Palace{
-        uint256 background;
-        uint256 building;
-        uint256 domeOne;
-        uint256 domeTwo;
-        uint256 domeThree;
-        uint256 fountainAndGarden;
-        uint256 railingAndBalcony;
-        uint256 tree;
-        uint256 pillar;
-    }
+    string public _baseTokenURI;
 
     
-    Palace[] public palaces;
+    uint256[] public palaces;
+
 
     mapping(bytes32 => address) internal requestToSender;
-
-    mapping(address => bool) internal rugOwners;
-
-
-    // @dev function for adding rugowners to rugOwners mapping
-    function addRugOwners(address _owner) public onlyOwner{
-        rugOwners[_owner]=true;
-    }
-
-    //@dev function for checking if minter is a rug owner
-    function contains(address _owner) public view returns (bool){
-        return rugOwners[_owner];
-    }
 
 
     //@dev constructor, sets the link variables, also should set the whitelist and rug owner list
@@ -59,9 +36,12 @@ contract GBPalaces is Ownable, ERC721, VRFConsumerBase {
         vrfCoordinator = _VRFCoordinator;
         keyHash = _keyhash;
         fee = 0.1 * 10**18; //0.1 LINK
-        palaceFee = 30000000000000000;
+        palaceFee = 0.046 ether;
+
+        _baseTokenURI = "grandbazaarnft.io/palaces/";
     }   
 
+    
 
     function getNumberOfPalaces()
     public view returns (uint256)
@@ -70,12 +50,15 @@ contract GBPalaces is Ownable, ERC721, VRFConsumerBase {
     }
 
     //@dev the mint function, a few requirements to mint 
-    function requestNewPalace() 
+    function requestNewPalace(bool isRugOwner, bool isWhiteList) 
     public payable returns(bytes32) {
         uint totalMinted = getNumberOfPalaces();
         require (totalMinted <= 7777, "This NFT is sold out!");
-        if(contains(msg.sender)){
-            require(msg.value >= (palaceFee - 7500000000000000), "Minting this NFT costs .025 ether"); 
+        if(isRugOwner == true){
+            require(msg.value >= 0.028 ether, "Minting this NFT costs .025 ether"); 
+        }
+        else if(isWhiteList == true){
+            require(msg.value >= 0.037 ether, "Minting this NFT costs .025 ether"); 
         }
         else{
            require(msg.value >= palaceFee, "Minting this NFT costs .03 ether"); 
@@ -95,42 +78,21 @@ contract GBPalaces is Ownable, ERC721, VRFConsumerBase {
     internal override{
         uint256 newId = palaces.length;
 
-        uint256 background = (randomNumber % 1000);
-
-        uint256 building = ((randomNumber % 1000000) / 1000);
-
-        uint256 domeOne = ((randomNumber % 1000000000) / 1000000);
-
-        uint256 domeTwo = ((randomNumber % 1000000000000) / 1000000000);
-
-        uint256 domeThree = ((randomNumber % 1000000000000000) / 1000000000000);
-
-        uint256 fountainAndGarden =  ((randomNumber % 1000000000000000000) / 1000000000000000);
-
-        uint256 railingAndBalcony =  ((randomNumber % 1000000000000000000000) / 1000000000000000000);
-
-        uint256 tree =  ((randomNumber % 1000000000000000000000000) / 1000000000000000000000);
-
-        uint256 pillar =  ((randomNumber % 1000000000000000000000000000) / 1000000000000000000000000);
-
-
-        palaces.push(
-            Palace(
-                background,
-                building,
-                domeOne,
-                domeTwo,
-                domeThree,
-                fountainAndGarden,
-                railingAndBalcony,
-                tree,
-                pillar
-            )
-        );
-
+        palaces.push(randomNumber);
 
         _safeMint(requestToSender[requestId], newId);
     }
+
+    function setBaseTokenURI(string memory URI) public onlyOwner {
+        _baseTokenURI = URI;
+    }
+
+    function baseURI() public view virtual override returns (string memory) {
+        // this might need to be _baseURI and need to change the variable to not be memory
+        // the reason this may be is that im not using pragma >= 8
+        return _baseTokenURI;
+    }
+
 
     function setTokenURI(uint256 tokenId, string memory _tokenURI)  public onlyOwner{
         _setTokenURI(tokenId, _tokenURI);
