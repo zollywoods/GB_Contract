@@ -38,7 +38,7 @@ contract GBPalaces is Ownable, ERC721, VRFConsumerBase {
         fee = 0.1 * 10**18; //0.1 LINK
         palaceFee = 0.046 ether;
 
-        _baseTokenURI = "grandbazaarnft.io/palaces/";
+        _baseTokenURI = "";
     }   
 
     
